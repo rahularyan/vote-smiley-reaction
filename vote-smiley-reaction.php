@@ -117,6 +117,11 @@ final class Vsr {
 	 * Class constructor.
 	 */
 	private function __construct() {
+		global $wpdb;
+
+		// Set reaction table in $wpdb for easier access.
+		$wpdb->rahularyan_reactions = $wpdb->prefix . self::REACTIONS_TABLE;
+
 		$this->dir = dirname( plugin_basename( __FILE__ ) );
 		$this->url = plugin_dir_url( __FILE__ );
 

@@ -18,6 +18,7 @@ defined( 'ABSPATH' ) || exit( 'No direct script access allowed' );
  * @since 0.1.0
  */
 final class DB {
+
 	/**
 	 * Check if database version matches with the version stored in table.
 	 *
@@ -41,11 +42,9 @@ final class DB {
 
 		global $wpdb;
 
-		$table_name = $wpdb->prefix . \RahulAryan\Vsr::REACTIONS_TABLE;
-
 		$charset_collate = $wpdb->get_charset_collate();
 
-		$sql = "CREATE TABLE $table_name (
+		$sql = "CREATE TABLE $wpdb->rahularyan_reactions (
 			reaction_id bigint(20) NOT NULL AUTO_INCREMENT,
 			user_id bigint(20) NOT NULL,
 			object_id bigint(20) NOT NULL,
@@ -55,7 +54,7 @@ final class DB {
 			PRIMARY KEY  (reaction_id)
 		) $charset_collate;";
 
-		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
 
 		rahularyan_vsr()->update_opt( 'DB_VERSION', \RahulAryan\Vsr::DB_VERSION );
@@ -106,11 +105,15 @@ final class DB {
 			return false;
 		}
 
-		$inserted = $wpdb->insert(
-			$wpdb->prefix . \RahulAryan\Vsr::REACTIONS_TABLE,
+		$inserted = $wpdb->insert( // phpcs:ignore WordPress.DB
+			$wpdb->rahularyan_reactions,
 			$data,
 			array(
-				'%s', '%d', '%s', '%d', '%s'
+				'%s',
+				'%d',
+				'%s',
+				'%d',
+				'%s',
 			)
 		);
 
@@ -140,8 +143,8 @@ final class DB {
 	public static function delete_by_id( $id ) {
 		global $wpdb;
 
-		$row = $wpdb->delete(
-			$wpdb->prefix . \RahulAryan\Vsr::REACTIONS_TABLE,
+		$row = $wpdb->delete( // phpcs:ignore WordPress.DB
+			$wpdb->rahularyan_reactions,
 			array( 'reaction_id' => $id ),
 			array( '%d' )
 		);
@@ -164,15 +167,16 @@ final class DB {
 	/**
 	 * Bulk delete reactions by object id.
 	 *
-	 * @param int $object_id Id of object.
+	 * @param int    $object_id   Id of object.
 	 * @param string $object_type Type of object.
 	 * @return false|int Return false on failure and count of rows deleted.
 	 */
 	public static function delete_by_object_id( $object_id, $object_type ) {
 		global $wpdb;
-		$table = $wpdb->prefix . \RahulAryan\Vsr::REACTIONS_TABLE;
 
-		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT reaction_id FROM {$table} WHERE object_id = %d AND object_type = %s", $object_id, $object_type ) );
+		$ids = $wpdb->get_col( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT reaction_id FROM $wpdb->rahularyan_reactions WHERE object_id = %d AND object_type = %s", $object_id, $object_type )
+		);
 
 		if ( empty( $ids ) ) {
 			return false;
@@ -194,9 +198,10 @@ final class DB {
 	 */
 	public static function delete_by_user_id( $user_id ) {
 		global $wpdb;
-		$table = $wpdb->prefix . \RahulAryan\Vsr::REACTIONS_TABLE;
 
-		$ids = $wpdb->get_col( $wpdb->prepare( "SELECT reaction_id FROM {$table} WHERE user_id = %d", $user_id ) );
+		$ids = $wpdb->get_col( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT reaction_id FROM {$wpdb->rahularyan_reactions} WHERE user_id = %d", $user_id )
+		);
 
 		if ( empty( $ids ) ) {
 			return false;
@@ -208,5 +213,80 @@ final class DB {
 		}
 
 		return count( $ids );
+	}
+
+	/**
+	 * Get a reaction by reaction id.
+	 *
+	 * @param int $id Id of reaction.
+	 * @return array|null
+	 */
+	public static function get_by_id( $id ) {
+		global $wpdb;
+
+		return $wpdb->get_row( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT * FROM {$wpdb->rahularyan_reactions} WHERE reaction_id = %d", $id )
+		);
+	}
+
+	/**
+	 * Get reactions by object id and type.
+	 *
+	 * @param int    $object_id   Id of object.
+	 * @param string $object_type Type of object.
+	 * @return array|null
+	 */
+	public static function get_by_object_id( $object_id, $object_type ) {
+		global $wpdb;
+
+		return $wpdb->get_results( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT * FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d AND object_type = %s", $object_id, $object_type )
+		);
+	}
+
+	/**
+	 * Get total count of reactions by reaction type.
+	 *
+	 * @param string    $reaction_type Type of reaction.
+	 * @param int|false $user_id User ID, default is current user.
+	 * @return int
+	 * @since 0.1.0
+	 */
+	public static function count_by_type( $reaction_type, $user_id = false ) {
+		global $wpdb;
+
+		$user_id    = false === $user_id ? get_current_user_id() : $user_id;
+		$user_query = '';
+
+		// Check if user id is empty.
+		if ( ! empty( $user_id ) ) {
+			$user_query = $wpdb->prepare( 'AND user_id = %d', $user_id );
+		}
+
+		return (int) $wpdb->get_var( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT COUNT(1) FROM {$wpdb->rahularyan_reactions} WHERE reaction_type = %s $user_query", $reaction_type ) // phpcs:ignore WordPress.DB
+		);
+	}
+
+	/**
+	 * Get total count of reactions by object id and type.
+	 *
+	 * @param int          $object_id   Object id.
+	 * @param string|false $object_type Object type.
+	 * @return int
+	 * @since 0.1.0
+	 */
+	public static function count_by_object_id( $object_id, $object_type = false ) {
+		global $wpdb;
+
+		$object_type_query = '';
+
+		if ( false !== $object_type ) {
+			$object_type_query = $wpdb->prepare( 'AND object_type = %s', $object_type );
+		}
+
+		return (int) $wpdb->get_var( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT COUNT(1) FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d $object_type_query", $object_id ) // phpcs:ignore WordPress.DB
+		);
 	}
 }
