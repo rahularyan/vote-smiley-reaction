@@ -1,0 +1,38 @@
+.vsr-about-me{
+    background: #fff;
+    border: solid 2px #ee7460;
+    border-radius: 5px;
+    padding: 15px;
+    max-width: 200px;
+}
+.vsr-about-me img{
+    border-radius: 10px;
+    border: solid 1px #ddd;
+}
+a.button.vsr-support-button {
+    margin-top: 8px;
+}
+.vsr-settings {
+    display: flex;
+    width: 100%;
+}
+.vsr-settings-left{
+    flex: 0 0 calc(100% - 200px );
+}
+.vsr-icons-list{
+    display: flex;
+}
+.vsr-icons-list > div{
+    border: solid 1px #ddd;
+    background: #fff;
+    margin-right: 10px;
+    width: 30px;
+    border-radius: 5px;
+    padding: 5px;
+}
+.vsr-icons-list img {
+    max-width: 20px;
+    margin: 0 auto;
+    display: block;
+    max-height: 20px;
+}

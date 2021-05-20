@@ -87,7 +87,7 @@ final class DB {
 			'object_id'     => (int) $object_id,
 			'object_type'   => (string) $object_type,
 			'user_id'       => (int) $user_id,
-			'date_created'  => (string) $date_created,
+			'date_reacted'  => (string) $date_created,
 		);
 
 		/**
@@ -232,15 +232,28 @@ final class DB {
 	/**
 	 * Get reactions by object id and type.
 	 *
-	 * @param int    $object_id   Id of object.
-	 * @param string $object_type Type of object.
-	 * @return array|null
+	 * @param int          $object_id     Id of object.
+	 * @param string       $object_type   Type of object.
+	 * @param false|string $reaction_type Reaction type.
+	 * @param false|int    $user_id       ID of user, default is current user.
+	 * @return object|null
 	 */
-	public static function get_by_object_id( $object_id, $object_type ) {
+	public static function get( $object_id, $object_type, $reaction_type = false, $user_id = false ) {
 		global $wpdb;
 
-		return $wpdb->get_results( // phpcs:ignore WordPress.DB
-			$wpdb->prepare( "SELECT * FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d AND object_type = %s", $object_id, $object_type )
+		$reaction_type_q = '';
+		$user_id_q       = '';
+
+		if ( false !== $reaction_type ) {
+			$reaction_type_q = $wpdb->prepare( 'AND reaction_type = %s', $reaction_type );
+		}
+
+		if ( false !== $user_id ) {
+			$user_id_q = $wpdb->prepare( 'AND user_id = %s', $user_id );
+		}
+
+		return $wpdb->get_row( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT * FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d AND object_type = %s $reaction_type_q $user_id_q", $object_id, $object_type ) // phpcs:ignore WordPress.DB
 		);
 	}
 
@@ -276,17 +289,84 @@ final class DB {
 	 * @return int
 	 * @since 0.1.0
 	 */
-	public static function count_by_object_id( $object_id, $object_type = false ) {
+	public static function count_by_object_id( $object_id, $object_type = false, $reaction_type = false ) {
 		global $wpdb;
 
-		$object_type_query = '';
+		$object_type_query   = '';
+		$reaction_type_query = '';
 
 		if ( false !== $object_type ) {
 			$object_type_query = $wpdb->prepare( 'AND object_type = %s', $object_type );
 		}
 
+		if ( false !== $reaction_type ) {
+			$reaction_type_query = $wpdb->prepare( 'AND reaction_type = %s', $reaction_type );
+		}
+
 		return (int) $wpdb->get_var( // phpcs:ignore WordPress.DB
-			$wpdb->prepare( "SELECT COUNT(1) FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d $object_type_query", $object_id ) // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT COUNT(1) FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d $object_type_query $reaction_type_query", $object_id ) // phpcs:ignore WordPress.DB
 		);
+	}
+
+	/**
+	 * Get total count of reactions of a object ordered by reaction_type.
+	 *
+	 * @param int          $object_id   Object id.
+	 * @param string|false $object_type Object type.
+	 * @return object
+	 * @since 0.1.0
+	 */
+	public static function count_reactions_of_object( $object_id, $object_type ) {
+		global $wpdb;
+
+		$rows = $wpdb->get_results( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT COUNT(1) as count, reaction_type FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d AND reaction_type = %s GROUP BY reaction_type", $object_id, $object_type ) // phpcs:ignore WordPress.DB
+		);
+
+		$counts = array( 'total' => 0 );
+
+		if ( ! empty( $rows ) ) {
+			foreach ( $rows as $row ) {
+				$counts[ $row['reaction_type'] ]  = (int) $row['count'];
+				$counts['total']                 += (int) $row['count'];
+			}
+		}
+
+		return (object) $counts;
+	}
+
+	/**
+	 * Check if user has already reacted on an object.
+	 *
+	 * @param int       $object_id     Object id.
+	 * @param string    $object_type   Object type.
+	 * @param string    $reaction_type Reaction type.
+	 * @param int|false $user_id       Id of user, default is current user.
+	 * @return bool
+	 */
+	public static function has_user_reacted( $object_id, $object_type, $reaction_type, $user_id = false, $ids = false ) {
+		global $wpdb;
+
+		$user_id = false === $user_id ? get_current_user_id() : $user_id;
+
+		if ( empty( $user_id ) ) {
+			return false;
+		}
+
+		$select = 'count(1)';
+
+		if ( false !== $ids ) {
+			$select = 'reaction_id';
+		}
+
+		$ret = (array) $wpdb->get_col( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT $select FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d AND object_type = %s AND user_id = %d AND reaction_type = %s LIMIT 1", $object_id, $object_type, $user_id, $reaction_type ) // phpcs:ignore WordPress.DB
+		);
+
+		if ( false !== $ids ) {
+			return $ret;
+		}
+
+		return $ret[0] > 0 ? true : false;
 	}
 }
