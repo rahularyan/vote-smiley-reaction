@@ -100,8 +100,8 @@ class Admin {
 	 */
 	public static function admin_menu() {
 		add_options_page(
-			'Vote Smiley Reaction',
-			'Vote Smiley Reaction',
+			'Vote & Smiley Reaction',
+			'Vote & Smiley Reaction',
 			'manage_options',
 			'vote-smiley-reaction',
 			array( __CLASS__, 'settings_page' )
@@ -156,10 +156,10 @@ class Admin {
 		}
 
 		$sanitized = array();
-
-		$sanitized['slug'] = sanitize_key( $reaction['slug'] );
-		$sanitized['name'] = sanitize_text_field( $reaction['name'] );
-		$sanitized['icon'] = absint( $reaction['icon'] );
+		$sanitized['slug']    = sanitize_key( $reaction['slug'] );
+		$sanitized['name']    = sanitize_text_field( $reaction['name'] );
+		$sanitized['icon']    = absint( $reaction['icon'] );
+		$sanitized['show_on'] = is_array( $reaction['show_on'] ) ? sanitize_array( $reaction['show_on'] ) : [];
 
 		$previous = rahularyan_vsr()->get_reaction_types();
 
@@ -229,5 +229,42 @@ class Admin {
 
 		wp_redirect( self::settings_urls( 'reaction_types' ) );
 		exit;
+	}
+
+	public static function get_where_to_show_options() {
+		$post_types = get_post_types( array( 'public' => true ), '' );
+		$taxonomies = get_taxonomies(
+			array(
+				'public'  => true,
+				'show_ui' => true,
+			),
+			'objects'
+		);
+
+		$taxonomies_kv = array();
+
+		if ( $taxonomies ) {
+			foreach ( $taxonomies as $tax ) {
+				$taxonomies_kv[ $tax->name ] = $tax->labels->name;
+			}
+		}
+
+		$post_types = wp_list_pluck( $post_types, 'label', 'name' );
+		// $cpts       = array();
+
+		// if ( ! empty( $post_types ) ) {
+		// 	foreach ( $post_types as $key => $name ) {
+		// 		$cpts[ 'cpt_' . $key ] = $name;
+		// 	}
+		// }
+
+		$types = array(
+			__( 'Custom post types', 'vote-smiley-reaction' ) => $post_types,
+			__( 'Taxonomies', 'vote-smiley-reaction' )        => $taxonomies_kv,
+			__( 'Comments', 'vote-smiley-reaction' )          => 'comments',
+			__( 'Author', 'vote-smiley-reaction' )            => 'author',
+		);
+
+		return $types;
 	}
 }

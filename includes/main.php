@@ -372,7 +372,7 @@ final class Vsr {
 			} elseif ( isset( $object->post_type ) ) {
 				$type = $object->post_type;
 			} elseif ( isset( $object->roles ) ) {
-				$type = 'user';
+				$type = 'author';
 			} elseif ( is_a( $object, 'WP_Post_Type' ) ) {
 				$type = 'cpt_' . $object->name;
 			}
@@ -397,6 +397,12 @@ final class Vsr {
 				continue;
 			}
 
+			$show_on = rahularyan_vsr()->get_reaction_type_show_on( $slug );
+
+			if ( is_array( $show_on ) && ! in_array( $type, $show_on ) ) {
+				continue;
+			}
+
 			$args = array( wp_create_nonce( 'vs-reaction' ), $id, $type, $slug );
 			$args = implode( ',', $args );
 
@@ -404,7 +410,7 @@ final class Vsr {
 			$user_reacted = DB::has_user_reacted( $id, $type, $slug, $user_id );
 			$css_classes  = 'rahularyan-vsr-type-' . $type . ' ' . ( $user_reacted ? ' rahularyan-vsr-active' : '' );
 
-			$html .= '<a href="#" class="rahularyan-vsr-reaction ' . esc_attr( $css_classes ) . '" data-vsr="' . esc_attr( $args ) . '">
+			$html .= '<a href="#" class="rahularyan-vsr-reaction ' . esc_attr( $css_classes ) . '" data-vsr="' . esc_attr( $args ) . '" data-vsr-title="' . esc_attr( $reaction['name'] ) . '">
 				<img src="' . esc_url( $icon ) . '" /> <span data-vsr-count="' . $count . '">' . $count . '</span>
 			</a>';
 		}
@@ -439,6 +445,26 @@ final class Vsr {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Get show of setting of a reaction type.
+	 *
+	 * @param string $slug Reaction type.
+	 * @return array|boolean
+	 */
+	public function get_reaction_type_show_on( $slug ) {
+		$type = $this->get_reaction_type( $slug );
+
+		if ( ! $type ) {
+			return false;
+		}
+
+		if ( ! empty( $type['show_on'] ) ) {
+			return $type['show_on'];
+		}
+
+		return true;
 	}
 
 	public function get_reaction_type_icon( $type ) {

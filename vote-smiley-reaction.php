@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name:     Vote Smiley Reaction
+ * Plugin Name:     Vote & Smiley Reaction
  * Plugin URI:      https://github.com/rahularyan/vote-smiley-reaction
  * Description:     Add voting and smiley reaction in WordPress.
  * Author:          Rahul Aryan

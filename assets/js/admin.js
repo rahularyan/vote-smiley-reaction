@@ -92,5 +92,13 @@
                 }
             })
         })
+
+        $('.vsr-reactions-table').on('click', '.vsr-reaction-type-show_on-msg a', function (e) {
+            e.preventDefault()
+
+            $(this).closest('.vsr-reaction-type-field').toggleClass('active')
+            $(this).closest('.vsr-reaction-type-field').find('select').prop('disabled', !$(this).closest('.vsr-reaction-type-field').is('.active'))
+
+        })
     })
 })(jQuery)

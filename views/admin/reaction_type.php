@@ -12,6 +12,9 @@ defined( 'ABSPATH' ) || exit;
 
 $delete_button_args = wp_create_nonce( 'add_reaction_row' );
 $icon               = rahularyan_vsr()->get_reaction_type_icon( $reaction['slug'] );
+
+$show_on_options = RahulAryan\Vsr\Admin::get_where_to_show_options();
+$active_show_on  = rahularyan_vsr()->get_reaction_type_show_on( $reaction['slug'] );
 ?>
 
 <?php if ( $reaction['required'] ) : ?>
@@ -44,13 +47,25 @@ $icon               = rahularyan_vsr()->get_reaction_type_icon( $reaction['slug'
 		<input type="text" name="reactions[<?php echo (int) $counter; ?>][name]" value="<?php echo esc_attr( $reaction['name'] ); ?>" />
 	</td>
 
-	<td class="vsr-reaction-type-field">
-		<!-- <select name="show_on" multiple="multiple">
-			<optgroup label="<?php esc_attr_e( 'Post Types', 'vote-smiley-reaction' ); ?>">
-				<option>Tyrannosaurus</option>
-				<option>Velociraptor</option>
-				<option>Deinonychus</option>
-			</optgroup>
-		</select> -->
+	<td class="vsr-reaction-type-field<?php echo is_array( $active_show_on ) ? ' active' : ''; ?>">
+		<div class="vsr-reaction-type-show_on-msg">
+			<?php esc_attr_e( 'By default it will everywhere. You can ', 'vote-smiley-reaction' ); ?>
+			<a href="#"><?php esc_attr_e( 'select', 'vote-smiley-reaction' ); ?></a>
+		</div>
+		<?php if ( $show_on_options ) : ?>
+			<select name="reactions[<?php echo (int) $counter; ?>][show_on][]" multiple="multiple" class="vsr-reaction-type-show_on"<?php echo ! is_array( $active_show_on ) ? ' disabled' : ''; ?>>
+				<?php foreach ( $show_on_options as $label => $optgroup ) : ?>
+					<?php if ( is_array( $optgroup ) ) : ?>
+						<optgroup label="<?php echo esc_attr( $label ); ?>">
+							<?php foreach ( $optgroup as $key => $opt ) : ?>
+								<option value="<?php echo esc_attr( $key ); ?>" <?php selected( true, in_array( $key, $active_show_on ) ); ?>><?php echo esc_html( $opt ); ?></option>
+							<?php endforeach; ?>
+						</optgroup>
+					<?php else: ?>
+						<option value="<?php echo esc_attr( $optgroup ); ?>" <?php selected( true, in_array( $label, $active_show_on ) ); ?>><?php echo esc_html( $label ); ?></option>
+					<?php endif; ?>
+				<?php endforeach; ?>
+			</select>
+		<?php endif; ?>
 	</td>
 </tr>

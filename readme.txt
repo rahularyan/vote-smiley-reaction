@@ -1,4 +1,4 @@
-=== Vote Smiley Reaction ===
+=== Vote & Smiley Reaction ===
 Contributors: nerdaryan
 Donate link: https://paypal.me/nerdaryan
 Tags: vote, reaction, smiley

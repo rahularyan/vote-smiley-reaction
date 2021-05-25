@@ -1,7 +1,7 @@
 (function ($) {
     $('body').on('click', '#rahularyan-vsr > a', function (e) {
         e.preventDefault()
-        // showToolTip($(this), 'This is a sample tooltip', true);
+        // showToolTip($(this), $(this).attr('data-vsr-title'), true);
         var elm = $(this)
         // return;
         $.ajax({

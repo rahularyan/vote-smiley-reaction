@@ -88,3 +88,9 @@ tr.vsr-reaction-info {
 tr.vsr-reaction-info td {
     padding: 10px;
 }
+.vsr-reaction-type-show_on{
+    display: none;
+}
+.vsr-reaction-type-field.active .vsr-reaction-type-show_on{
+    display: block;
+}

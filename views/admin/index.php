@@ -11,19 +11,19 @@ namespace RahulAryan\Vsr;
 defined( 'ABSPATH' ) || exit;
 
 $tabs = array(
-	'settings'       => __( 'Settings', 'vote-smiley-reaction' ),
 	'reaction_types' => __( 'Reaction Types', 'vote-smiley-reaction' ),
+	'settings'       => __( 'Settings', 'vote-smiley-reaction' ),
 );
 
-$active_tab = get_var( 'tab', 'settings' );
+$active_tab = get_var( 'tab', 'reaction_types' );
 
 if ( ! isset( $tabs[ $active_tab ] ) ) {
-    esc_attr_e( 'Invalid tab.', 'vote-smiley-reaction' );
-    return;
+	esc_attr_e( 'Invalid tab.', 'vote-smiley-reaction' );
+	return;
 }
 ?>
 <div class="wrap">
-	<h2>Vote Smiley Reaction</h2>
+	<h2>Vote & Smiley Reaction</h2>
 
 	<h2 class="nav-tab-wrapper">
 		<?php foreach ( $tabs as $slug => $title ) : ?>
