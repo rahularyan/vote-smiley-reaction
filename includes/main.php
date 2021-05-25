@@ -11,6 +11,8 @@ namespace RahulAryan;
 
 use RahulAryan\Vsr\DB;
 
+use function RahulAryan\Vsr\can_user_react;
+
 // Do not allow direct access.
 defined( 'ABSPATH' ) || exit;
 
@@ -208,16 +210,9 @@ final class Vsr {
 			array(
 				'DB_VERSION'     => 0,
 				'post_types'     => array( 'post', 'page' ),
-				'reaction_types' => array(
-					'like'        => '',
-					'dislike'     => '',
-					'100'         => '',
-					'eyes'        => '',
-					'heart'       => '',
-					'closed-eyes' => '',
-					'heart-eyes'  => '',
-					'star'        => '',
-				),
+				'one_reaction'   => false,
+				'reaction_types' => $this->get_default_reactions(),
+				'taxonomies'     => array( 'category', 'post_tag' ),
 			)
 		);
 	}
@@ -255,6 +250,87 @@ final class Vsr {
 		return $default;
 	}
 
+	public function get_default_reactions() {
+		$defaults = array(
+			'vote_up' => array(
+				'slug'     => 'vote_up',
+				'name'     => __( 'Vote Up', 'vote-smiley-reaction' ),
+				'icon'     => $this->get_url( '/assets/images/icons/vote_up.svg' ),
+				'icon_id'  => 0,                                                      // This is important for setting default icon.
+				'required' => true,
+			),
+			'vote_down' => array(
+				'slug'     => 'vote_down',
+				'name'     => __( 'Vote Down', 'vote-smiley-reaction' ),
+				'icon'     => $this->get_url( '/assets/images/icons/vote_down.svg' ),
+				'icon_id'  => 0,                                                        // This is important for setting default icon.
+				'required' => true,
+			),
+			'100' => array(
+				'slug'    => '100',
+				'name'    => __( '100', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/100.svg' ),
+				'icon_id' => 0,
+			),
+			'angry' => array(
+				'slug'    => 'angry',
+				'name'    => __( 'Angry', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/angry.svg' ),
+				'icon_id' => 0,
+			),
+			'clap' => array(
+				'slug'    => 'clap',
+				'name'    => __( 'Clap', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/clap.svg' ),
+				'icon_id' => 0,
+			),
+			'confused' => array(
+				'slug'    => 'confused',
+				'name'    => __( 'Confused', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/confused.svg' ),
+				'icon_id' => 0,
+			),
+			'eyes' => array(
+				'slug'    => 'eyes',
+				'name'    => __( 'Eyes', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/eyes.svg' ),
+				'icon_id' => 0,
+			),
+			'happy' => array(
+				'slug'    => 'happy',
+				'name'    => __( 'Happy', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/happy.svg' ),
+				'icon_id' => 0,
+			),
+			'idea' => array(
+				'slug'    => 'idea',
+				'name'    => __( 'Idea', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/idea.svg' ),
+				'icon_id' => 0,
+			),
+			'rocket' => array(
+				'slug'    => 'rocket',
+				'name'    => __( 'Rocket', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/rocket.svg' ),
+				'icon_id' => 0,
+			),
+			'unhappy' => array(
+				'slug'    => 'unhappy',
+				'name'    => __( 'Unhappy', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/unhappy.svg' ),
+				'icon_id' => 0,
+			),
+			'flag' => array(
+				'slug'    => 'flag',
+				'name'    => __( 'Flag', 'vote-smiley-reaction' ),
+				'icon'    => $this->get_url( '/assets/images/icons/flag.svg' ),
+				'icon_id' => 0,
+			),
+		);
+
+		return apply_filters( 'rahularyan_vsr_default_reactions', $defaults );
+	}
+
 	/**
 	 * Get all reaction types name and icons.
 	 *
@@ -267,14 +343,13 @@ final class Vsr {
 			return array();
 		}
 
-		$reaction_types = array();
-
-		foreach ( $reactions as $type => $icon ) {
-			$default_icon = rahularyan_vsr()->get_url( 'assets/images/icons/' . $type . '.svg' );
-			$reaction_types[ $type ] = empty( $icon ) ? $default_icon : $icon;
+		foreach ( $reactions as $k => $reaction ) {
+			if ( 0 === $reaction['icon_id'] && ! empty( $reaction['icon'] ) && 0 === strpos( $reaction['icon'], 'http' ) ) {
+				$reactions[ $k ]['icon'] = $reaction['icon'];
+			}
 		}
 
-		return $reaction_types;
+		return $reactions;
 	}
 
 	/**
@@ -315,12 +390,18 @@ final class Vsr {
 
 		$html = '<div class="rahularyan-vsr" id="rahularyan-vsr">';
 
-		foreach ( $this->get_reaction_types() as $reaction_type => $icon ) {
-			$args = array( wp_create_nonce( 'vs-reaction' ), $id, $type, $reaction_type );
+		foreach ( $this->get_reaction_types() as $slug => $reaction ) {
+			$icon = $this->get_reaction_type_icon( $slug );
+
+			if ( empty( $icon ) ) {
+				continue;
+			}
+
+			$args = array( wp_create_nonce( 'vs-reaction' ), $id, $type, $slug );
 			$args = implode( ',', $args );
 
-			$count        = (int) DB::count_by_object_id( $id, $type, $reaction_type );
-			$user_reacted = DB::has_user_reacted( $id, $type, $reaction_type, $user_id );
+			$count        = (int) DB::count_by_object_id( $id, $type, $slug );
+			$user_reacted = DB::has_user_reacted( $id, $type, $slug, $user_id );
 			$css_classes  = 'rahularyan-vsr-type-' . $type . ' ' . ( $user_reacted ? ' rahularyan-vsr-active' : '' );
 
 			$html .= '<a href="#" class="rahularyan-vsr-reaction ' . esc_attr( $css_classes ) . '" data-vsr="' . esc_attr( $args ) . '">
@@ -342,6 +423,40 @@ final class Vsr {
 		if ( $this->widget_loaded ) {
 			wp_enqueue_script( 'rahularyan_vsr-frontend-script' );
 		}
+	}
+
+	/**
+	 * Get a single reaction type.
+	 *
+	 * @param string $slug Slug of reaction type.
+	 * @return false|array
+	 */
+	public function get_reaction_type( $slug ) {
+		$types = $this->get_reaction_types();
+
+		if ( isset( $types[ $slug ] ) ) {
+			return $types[ $slug ];
+		}
+
+		return false;
+	}
+
+	public function get_reaction_type_icon( $type ) {
+		$types = $this->get_reaction_types();
+
+		if ( empty( $types[ $type ] ) ) {
+			return false;
+		}
+
+		$reaction = $types[ $type ];
+
+		if ( ! empty( $reaction['icon'] ) && 0 === strpos( $reaction['icon'], 'http' ) ) {
+			return $reaction['icon'];
+		} elseif ( empty( $reaction['icon'] ) && ! empty( $reaction['icon_id'] ) ) {
+			return wp_get_attachment_url( $reaction['icon_id'] );
+		}
+
+		return false;
 	}
 
 }

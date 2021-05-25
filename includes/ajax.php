@@ -31,11 +31,13 @@ final class Ajax {
 			wp_send_json_error( array( 'msg' => esc_attr__( 'Invalid action.', 'vote-smiley-reaction' ) ), 403 );
 		}
 
-		if ( 'add_reaction' === $vsr_action ) {
-			self::__action_add_reaction();
+		$vsr_action = '__action_' . $vsr_action;
+
+		if ( method_exists( __CLASS__, $vsr_action ) ) {
+			self::$vsr_action();
 		}
 
-		exit;
+		wp_send_json_error( array( 'msg' => __( 'Invalid action.', 'vote-smiley-reaction' ) ) );
 	}
 
 	/**
@@ -82,5 +84,72 @@ final class Ajax {
 				'success'     => true,
 			)
 		);
+	}
+
+	private static function __action_get_reaction_type_row() {
+		$args    = get_var( 'args', '' );
+		$counter = get_var( 'counter', 1 );
+
+		if ( empty( $args ) || ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'msg' => esc_attr__( 'Bad request', 'vote-smiley-reaction' ) ) );
+		}
+
+		$args = explode( ',', $args );
+
+		if ( ! wp_verify_nonce( $args[0], 'add_reaction_row' ) ) {
+			wp_send_json_error( array( 'msg' => esc_attr__( 'Bad request', 'vote-smiley-reaction' ) ) );
+		}
+
+		$reaction = array(
+			'slug'    => '',
+			'name'    => '',
+			'icon'    => '',
+			'show_on' => [],
+		);
+
+		$counter++;
+
+		include rahularyan_vsr()->get_path( '/views/admin/reaction_type.php' );
+		exit;
+	}
+
+	private static function __action_delete_reaction_type_row() {
+		$args = get_var( 'args', '' );
+		$slug = sanitize_key( get_var( 'slug', '' ) );
+
+		if ( empty( $args ) || ! current_user_can( 'manage_options' ) || empty( $slug ) ) {
+			wp_send_json_error( array( 'msg' => esc_attr__( 'Bad request', 'vote-smiley-reaction' ) ) );
+		}
+
+		$reaction = rahularyan_vsr()->get_reaction_type( $slug );
+
+		if ( empty( $reaction ) ) {
+			// Send success even if reaction does not exits.
+			wp_send_json_success( array( 'msg' => esc_attr__( 'Success', 'vote-smiley-reaction' ) ) );
+		}
+
+		$args = explode( ',', $args );
+
+		if ( ! wp_verify_nonce( $args[0], 'delete_reaction_row' ) ) {
+			wp_send_json_error( array( 'msg' => esc_attr__( 'Bad request', 'vote-smiley-reaction' ) ) );
+		}
+	}
+
+	private static function __action_reset_reaction_types() {
+		$args = get_var( 'args', '' );
+
+		if ( empty( $args ) || ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'msg' => esc_attr__( 'Bad request', 'vote-smiley-reaction' ) ) );
+		}
+
+		$args = explode( ',', $args );
+
+		if ( ! wp_verify_nonce( $args[0], 'vsr_rest_reactions' ) ) {
+			wp_send_json_error( array( 'msg' => esc_attr__( 'Bad request', 'vote-smiley-reaction' ) ) );
+		}
+
+		rahularyan_vsr()->update_opt( 'reaction_types', rahularyan_vsr()->get_default_reactions() );
+
+		wp_send_json_success( array( 'msg' => __( 'Success', 'vote-smiley-reaction' ) ) );
 	}
 }

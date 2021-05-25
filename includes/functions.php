@@ -46,27 +46,31 @@ function get_var( $name, $default = null ) {
 /**
  * Check if user has permission to cast a reaction on a object.
  *
- * @param integer $object_id   Id of object.
- * @param string  $object_type Type of object.
- * @param int     $user_id     Id of user, default is current user.
+ * @param integer $object_id      Id of object.
+ * @param string  $object_type    Type of object.
+ * @param int     $user_id        Id of user, default is current user.
  * @return boolean
  * @since 0.1.0
  */
 function can_user_react( $object_id, $object_type, $user_id = false ) {
 	$user_id = false === $user_id ? get_current_user_id() : $user_id;
 
-	if ( empty( $user_id ) ) {
+	if ( empty( $user_id ) || empty( $object_id ) || empty( $object_type ) ) {
 		return false;
 	}
 
-	/**
-	 * Object type must be passed.
-	 */
-	if ( ! empty( $object_id ) && empty( $object_type ) ) {
-		return false;
+	$check = apply_filters( 'rahularyan_vsr_can_user_react', null );
+
+	if ( true === $check ) {
+		return true;
 	}
 
-	// TODO: Also check for access to object.
+	// $user_reacted = DB::has_user_reacted( $object_id, $object_type, false, $user_id );
+
+	// // If only one reaction is allowed in setting then return.
+	// if ( $user_reacted && rahularyan_vsr()->opt( 'one_reaction', false ) ) {
+	// 	return false;
+	// }
 
 	return true;
 }

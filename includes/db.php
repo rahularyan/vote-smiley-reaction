@@ -344,7 +344,7 @@ final class DB {
 	 * @param int|false $user_id       Id of user, default is current user.
 	 * @return bool
 	 */
-	public static function has_user_reacted( $object_id, $object_type, $reaction_type, $user_id = false, $ids = false ) {
+	public static function has_user_reacted( $object_id, $object_type, $reaction_type = false, $user_id = false ) {
 		global $wpdb;
 
 		$user_id = false === $user_id ? get_current_user_id() : $user_id;
@@ -353,20 +353,16 @@ final class DB {
 			return false;
 		}
 
-		$select = 'count(1)';
+		$reaction_type_q = '';
 
-		if ( false !== $ids ) {
-			$select = 'reaction_id';
+		if ( false !== $reaction_type ) {
+			$reaction_type_q = $wpdb->prepare( 'AND reaction_type = %s', $reaction_type );
 		}
 
-		$ret = (array) $wpdb->get_col( // phpcs:ignore WordPress.DB
-			$wpdb->prepare( "SELECT $select FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d AND object_type = %s AND user_id = %d AND reaction_type = %s LIMIT 1", $object_id, $object_type, $user_id, $reaction_type ) // phpcs:ignore WordPress.DB
+		$ret = (int) $wpdb->get_var( // phpcs:ignore WordPress.DB
+			$wpdb->prepare( "SELECT count(1) FROM {$wpdb->rahularyan_reactions} WHERE object_id = %d AND object_type = %s AND user_id = %d $reaction_type_q", $object_id, $object_type, $user_id ) // phpcs:ignore WordPress.DB
 		);
 
-		if ( false !== $ids ) {
-			return $ret;
-		}
-
-		return $ret[0] > 0 ? true : false;
+		return $ret;
 	}
 }

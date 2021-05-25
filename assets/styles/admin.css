@@ -36,3 +36,55 @@ a.button.vsr-support-button {
     display: block;
     max-height: 20px;
 }
+.vsr-reaction-type{
+    margin-bottom: 3px;
+    background: #fff;
+
+}
+.vsr-reaction-type td{
+    padding: 10px;
+}
+.vsr-reaction-type-counter div {
+    border: solid 1px #7aa0b0;
+    background: #c5edff;
+    width: 25px;
+    height: 25px;
+    text-align: center;
+    border-radius: 50%;
+    line-height: 1.8;
+    font-weight: bold;
+    margin-right: 10px;
+}
+.vsr-reaction-type-counter div::before{
+    counter-increment: rowNumber;
+    content: counter(rowNumber);
+}
+.vsr-reactions-table{
+    width: 100%;
+    counter-reset: rowNumber;
+}
+.vsr-reactions-table tr th{
+    text-align: left;
+}
+.vsr-reaction-type-icon .rahularyan-vsr-remove-icon-btn{
+    display: none;
+}
+.vsr-reaction-type-icon.has-image a.rahularyan-vsr-upload-btn{
+    display: none;
+}
+.vsr-reaction-type-icon.has-image .rahularyan-vsr-remove-icon-btn{
+    display: inline-block;
+}
+.vsr-reaction-type-icon img{
+    max-width: 20px;
+}
+.vsr-reaction-type-no-row{
+    text-align: center;
+}
+tr.vsr-reaction-info {
+    background: #fff;
+    font-style: italic;
+}
+tr.vsr-reaction-info td {
+    padding: 10px;
+}
