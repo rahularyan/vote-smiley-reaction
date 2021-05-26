@@ -49,8 +49,10 @@ $active_show_on  = rahularyan_vsr()->get_reaction_type_show_on( $reaction['slug'
 
 	<td class="vsr-reaction-type-field<?php echo is_array( $active_show_on ) ? ' active' : ''; ?>">
 		<div class="vsr-reaction-type-show_on-msg">
-			<?php esc_attr_e( 'By default it will everywhere. You can ', 'vote-smiley-reaction' ); ?>
+			<?php esc_attr_e( 'By default it will show everywhere. You can ', 'vote-smiley-reaction' ); ?>
 			<a href="#"><?php esc_attr_e( 'select', 'vote-smiley-reaction' ); ?></a>
+			<br>
+			<br>
 		</div>
 		<?php if ( $show_on_options ) : ?>
 			<select name="reactions[<?php echo (int) $counter; ?>][show_on][]" multiple="multiple" class="vsr-reaction-type-show_on"<?php echo ! is_array( $active_show_on ) ? ' disabled' : ''; ?>>

@@ -383,7 +383,7 @@ final class Vsr {
 
 		if ( empty( $id ) && empty( $type ) ) {
 			if ( current_user_can( 'manage_options' ) ) {
-				$html = __( 'Unable to guess id and type of current page.' );
+				$html = __( 'Unable to guess id and type of current page.', 'vote-smiley-reaction' );
 			}
 			return $html;
 		}
