@@ -4,10 +4,10 @@
  * Plugin URI:      https://github.com/rahularyan/vote-smiley-reaction
  * Description:     Add voting and smiley reaction in WordPress.
  * Author:          Rahul Aryan
- * Author URI:      https://wp.cafe
+ * Author URI:      https://rahularyan.com
  * Text Domain:     vote-smiley-reaction
  * Domain Path:     /languages
- * Version:         0.1.0
+ * Version:         1.0.1
  *
  * @package         RahulAryan\Vsr
  */
